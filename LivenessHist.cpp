@@ -18,8 +18,14 @@ struct LivenessHist : public BasicBlockPass{
             cerr<<"Inst:"<<inst_it->getName().str()<<endl;
             User::op_iterator op;
             //CallInst *call_inst = dyn_cast<CallInst>(&(*inst_it));
-            for(op = inst_it->op_begin(); op != inst_it->op_end(); op++){
-                cerr<<"  op:"<<op->getName().str()<<endl;
+            for(op = inst_it->op_begin(); op != inst_it->op_end(); op++)
+            {
+                Value *val = *op;
+                if(isa<Instruction>(val))
+                    cerr<<" def:";
+                if(isa<Argument>(val))
+                    cerr<<" arg:";
+                cerr<<(*op)->getName().str()<<endl;
             }
         }
         return false;
