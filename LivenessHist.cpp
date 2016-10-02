@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <set>
+#include <map>
 using namespace llvm;
 using namespace std;
 
@@ -43,6 +44,19 @@ struct LivenessHist : public BasicBlockPass{
       return kill;
     }
 
+    bool doFinalization(Module &M){
+      map<int, int> hist;
+      for(map<BasicBlock*, set<Value*> >::iterator it = live_out.begin(); it!=live_out.end(), it++){
+        int sz = it->second.size();
+        if(hist.find(sz)==hist.end())hist[sz]=0;
+        hist[sz]++;
+      }
+      for(map<int, int>::iterator it = hist.begin(); hist.end(); it++){
+        cerr<<"[ "<<it->first<<": "<<it->second<<"] "
+      }
+      cerr<<endl;
+      return false;
+    }
     bool runOnBasicBlock(BasicBlock &blk) override{
         set<Instruction*> *gen = GEN(&blk);
         for(set<Instruction*>::iterator it = gen->begin(); it!=gen->end(); it++){
