@@ -61,16 +61,50 @@ return:                                           ; preds = %if.end, %if.then
 declare i32 @printf(i8*, ...) #1
 
 ; Function Attrs: nounwind uwtable
+define void @fak(i32 %b, i32 %g, i32 %k) #0 {
+entry:
+  %b.addr = alloca i32, align 4
+  %g.addr = alloca i32, align 4
+  %k.addr = alloca i32, align 4
+  %a = alloca i32, align 4
+  store i32 %b, i32* %b.addr, align 4
+  store i32 %g, i32* %g.addr, align 4
+  store i32 %k, i32* %k.addr, align 4
+  %0 = load i32, i32* %b.addr, align 4
+  %add = add nsw i32 1, %0
+  store i32 %add, i32* %a, align 4
+  ret void
+}
+
+; Function Attrs: nounwind uwtable
 define i32 @main() #0 {
 entry:
   %retval = alloca i32, align 4
+  %a = alloca i32, align 4
+  %b = alloca i32, align 4
+  %s = alloca i32, align 4
   %r = alloca i32, align 4
   store i32 0, i32* %retval, align 4
+  store i32 1, i32* %a, align 4
+  store i32 2, i32* %b, align 4
   %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([15 x i8], [15 x i8]* @.str.1, i32 0, i32 0))
-  %call1 = call i32 @foo(i32 3)
+  %0 = load i32, i32* %a, align 4
+  %1 = load i32, i32* %b, align 4
+  %sub = sub nsw i32 %0, %1
+  store i32 %sub, i32* %s, align 4
+  %2 = load i32, i32* %s, align 4
+  %3 = load i32, i32* %a, align 4
+  %4 = load i32, i32* %b, align 4
+  call void @fak(i32 %2, i32 %3, i32 %4)
+  %5 = load i32, i32* %a, align 4
+  %6 = load i32, i32* %b, align 4
+  %7 = load i32, i32* %b, align 4
+  %mul = mul nsw i32 %6, %7
+  %add = add nsw i32 %5, %mul
+  %call1 = call i32 @foo(i32 %add)
   store i32 %call1, i32* %r, align 4
-  %0 = load i32, i32* %r, align 4
-  %call2 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @.str.2, i32 0, i32 0), i32 %0)
+  %8 = load i32, i32* %r, align 4
+  %call2 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @.str.2, i32 0, i32 0), i32 %8)
   %call3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str.3, i32 0, i32 0))
   ret i32 0
 }

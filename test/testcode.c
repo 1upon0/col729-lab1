@@ -6,10 +6,16 @@ int foo(int n){
         return 0;
     return 1+foo(n-1);
 }
-
+void fak(int b,int g,int k){
+    int a=1+b;
+}
 int main(){
+    int a=1;
+    int b=2;
     printf("This is main!\n");
-    int r=foo(3);
+    int s= a-b;
+    fak(s,a,b);
+    int r= foo(a+b*b);
     printf("Foo says %d\n",r);
     printf("Bye!\n");
     return 0;
