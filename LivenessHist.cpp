@@ -24,7 +24,7 @@ struct LivenessHist : public FunctionPass {
             return;
         gen[bb] = set<Value*>();
         kill[bb] = set<Value*>();
-        set<Value*>() &_gen = gen[bb], &_kill = kill[bb];
+        set<Value*> &_gen = gen[bb], &_kill = kill[bb];
 
         for(BasicBlock::iterator it_blk = bb->begin(); it_blk != bb->end(); it_blk++)
         {
@@ -34,7 +34,7 @@ struct LivenessHist : public FunctionPass {
                 Value *val = it_op->get();
                 if(isa<Instruction>(val) || isa<Argument>(val)){
                     if(_kill.find((Instruction*)val) == _kill.end()){
-                        _gen->insert((Instruction*)val);
+                        _gen.insert((Instruction*)val);
                     }
                 }
             }
@@ -47,40 +47,96 @@ struct LivenessHist : public FunctionPass {
             live_out[blk] = set<Value*>();
 
         set<Value*> &out = live_out[blk];
-        bool changed = false;
-
-        for(BasicBlock::iterator succ_it = succ_begin(blk); succ_it != succ_end(blk); succ_it++){
-            BasicBlock *succ = succ_it;
-            map<BasicBlock*, set<Value*> >::iterator in = live_in.find(succ);
-            if(in == live_in.end())
-                live_in.insert(make_pair(succ, set<Value*>()));
-
-            for(set<Value*>::iterator val_it = in->begin(); val_it != in->end(); val_it++){
-                pair<set<Value*>::iterator, bool> res = out.insert(*val_it);
-                if(res->second)
-                    changed = true;
-            }
-        }
+        
         set<Value*> in = out;
-        for(set<Value*>::iterator val_it = kill->begin(); val_it != kill->end(); val_it++){
+        calc_genkill(blk);
+        cerr<<kill[blk].size()<<": "<<in.size()<<" ";
+        for(set<Value*>::iterator val_it = kill[blk].begin(); val_it != kill[blk].end(); val_it++){
             in.erase(*val_it);
         }
-        for(set<Value*>::iterator val_it = gen->begin(); val_it != gen->end(); val_it++){
+        cerr<<in.size()<<endl;
+        for(set<Value*>::iterator val_it = gen[blk].begin(); val_it != gen[blk].end(); val_it++){
             in.insert(*val_it);
         }
         live_in[blk] = in;
+        
+        bool changed = false;
+
+        for(succ_iterator succ_it = succ_begin(blk); succ_it != succ_end(blk); succ_it++){
+            BasicBlock *succ = succ_it.getSource();
+
+            if(live_in.find(succ) == live_in.end()){
+                live_in[succ] = set<Value*>();
+                cerr<<";";
+            }
+                
+            set<Value*> &in = live_in[succ];
+            cerr<<"insz: "<<in.size()<<endl;
+            for(set<Value*>::iterator val_it = in.begin(); val_it != in.end(); val_it++){
+                pair<set<Value*>::iterator, bool> res = out.insert(*val_it);
+                if(res.second)
+                    changed = true;
+            }
+        }
         return changed;
     }
+
+    bool doFinalization(Module &M) override {
+      map<int, int> hist;
+      for(map<BasicBlock*, set<Value*> >::iterator it = live_out.begin(); it!=live_out.end(); it++){
+        int sz = it->second.size();
+        if(hist.find(sz)==hist.end())hist[sz]=0;
+        hist[sz]++;
+      }
+      for(map<int, int>::iterator it = hist.begin(); it != hist.end(); it++){
+        cerr<<"[ "<<it->first<<": "<<it->second<<"] ";
+      }
+      cerr<<endl;
+      return false;
+    }
+
     bool runOnFunction(Function &func) override {
         cerr<<"Func: "<<func.getName().str()<<endl;
         while(1){
             bool changed = false;
             for(Function::iterator blk_it = func.begin(); blk_it != func.end(); blk_it++){
-                changed = changed || update_live(blk_it);
+                changed = changed || update_live(&(*blk_it));
             }
+            cerr<<".";
             if(!changed)
                 break;
         }
+        cerr<<"Function: "<<func.getName().str()<<endl;
+        for(Function::iterator blk_it = func.begin(); blk_it != func.end(); blk_it++){
+            cerr<<"blk: "<<blk_it->getName().str()<<" -> (g,k,i,o): ";
+            cerr<<gen[&(*blk_it)].size()<<" ";
+            cerr<<kill[&(*blk_it)].size()<<" ";
+            cerr<<live_in[&(*blk_it)].size()<<" ";
+            cerr<<live_out[&(*blk_it)].size()<<endl;
+            for(set<Value*>::iterator it = live_in[&(*blk_it)].begin(); it != live_in[&(*blk_it)].end(); it++){
+                if(isa<Instruction>(*it)){
+                    cerr<< dyn_cast<Instruction>(*it)->getOpcodeName() << " ";
+
+                    dyn_cast<Instruction>(*it)->getDebugLoc().print(errs());
+                }
+                // else 
+                cerr<<"n:"<<(*it)->getName().str()<<" "; 
+            }
+            cerr<<endl;
+
+            for(set<Value*>::iterator it = live_out[&(*blk_it)].begin(); it != live_out[&(*blk_it)].end(); it++){
+                if(isa<Instruction>(*it)){
+                    cerr<< dyn_cast<Instruction>(*it)->getOpcodeName() << " ";
+
+                    dyn_cast<Instruction>(*it)->getDebugLoc().print(errs());
+                }
+                // else 
+                cerr<<"n:"<<(*it)->getName().str()<<" "; 
+            }
+            cerr<<endl;
+        }
+        cerr<<endl;
+    
         return false;
     }
 };
