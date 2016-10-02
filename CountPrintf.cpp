@@ -1,5 +1,6 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <iostream>
@@ -14,7 +15,7 @@ struct CntPrintf : public FunctionPass{
     bool runOnFunction(Function &F) override {
     	  int count = 0;
 		    for(Function::iterator it_f = F.begin(); it_f != F.end() ; ++it_f){
-		      BasicBlock& b = *it;
+		      BasicBlock& b = *it_f;
 		      for(BasicBlock::iterator it_b = b.begin(); it_b != b.end(); ++it_b){
 				    CallInst *si = dyn_cast<CallInst>(&*it_b);
 		        if(si != NULL){
