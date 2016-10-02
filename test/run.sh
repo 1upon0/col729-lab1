@@ -10,5 +10,5 @@ clang testcode.c -S -emit-llvm
 echo "---- testcode output follows ----"
 ./testcode
 echo "---- cntPrintf Output follows ----"
-opt -load "$LLVM/build/lib/LLVMCntPrintf.so" -load "$LLVM/build/lib/LLVMLivenessHist.so" \
+opt -load "$LLVM/build/lib/LLVMLab1.so" \
     -cntPrintf -livenessHist < testcode.ll > /dev/null
