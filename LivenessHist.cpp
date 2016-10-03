@@ -46,24 +46,24 @@ struct LivenessHist : public FunctionPass {
         if(live_out.find(blk) == live_out.end())
             live_out[blk] = set<Value*>();
 
-        set<Value*> &out = live_out[blk];
+        auto &out = live_out[blk];
         
         set<Value*> in = out;
         calc_genkill(blk);
         cerr<<kill[blk].size()<<": "<<in.size()<<" ";
-        for(set<Value*>::iterator val_it = kill[blk].begin(); val_it != kill[blk].end(); val_it++){
-            in.erase(*val_it);
+        for(auto pval: kill[blk]){
+            in.erase(pval);
         }
         cerr<<in.size()<<endl;
-        for(set<Value*>::iterator val_it = gen[blk].begin(); val_it != gen[blk].end(); val_it++){
-            in.insert(*val_it);
+        for(auto pval: gen[blk]){
+            in.insert(pval);
         }
         live_in[blk] = in;
         
         bool changed = false;
 
         for(succ_iterator succ_it = succ_begin(blk); succ_it != succ_end(blk); succ_it++){
-            BasicBlock *succ = succ_it.getSource();
+            BasicBlock *succ = *succ_it;
 
             if(live_in.find(succ) == live_in.end()){
                 live_in[succ] = set<Value*>();
@@ -72,8 +72,8 @@ struct LivenessHist : public FunctionPass {
                 
             set<Value*> &in = live_in[succ];
             cerr<<"insz: "<<in.size()<<endl;
-            for(set<Value*>::iterator val_it = in.begin(); val_it != in.end(); val_it++){
-                pair<set<Value*>::iterator, bool> res = out.insert(*val_it);
+            for(auto pval: in){
+                auto res = out.insert(pval);
                 if(res.second)
                     changed = true;
             }
