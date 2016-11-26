@@ -1,16 +1,18 @@
 #!/bin/bash
-cd ~/workspace/llvm
-LLVM=`pwd`
-PATH="$LLVM/build/bin:$PATH"
-cd "$LLVM/build/lib/Analysis/lab1"
+cd ~/workspace
+WORKSPACE=`pwd`
+PATH="$WORKSPACE/build/bin:$PATH"
+cd "$WORKSPACE/build/lib/Analysis/lab1"
 make
-cd "$LLVM/lib/Analysis/lab1/test"
-clang testcode.c -o testcode
-clang testcode.c -S -emit-llvm
+cd "$WORKSPACE/llvm/lib/Analysis/lab1/test"
+clang -O0 testcode.c -o testcode
+clang -O0 testcode.c -S -emit-llvm
 echo "---- testcode output follows ----"
 ./testcode
 echo "---- cntPrintf Output follows ----"
-opt -load "$LLVM/build/lib/LLVMLab1.so" -cntPrintf < testcode.ll > /dev/null
+opt -load "$WORKSPACE/build/lib/LLVMLab1.so" -cntPrintf < testcode.ll > /dev/null
 echo "---- livenessHist Output follows ----"
-opt -load "$LLVM/build/lib/LLVMLab1.so" -livenessHist < testcode.ll > /dev/null
+opt -mem2reg < testcode.ll > testcode.bc
+llvm-dis < testcode.bc > testcode.ll
+opt -load "$WORKSPACE/build/lib/LLVMLab1.so" -livenessHist < testcode.ll > /dev/null
 
